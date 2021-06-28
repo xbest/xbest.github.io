@@ -37,3 +37,11 @@ target/
 /live2d_models/
 /db.json
 /debug.log
+
+.DS_Store
+Thumbs.db
+db.json
+*.log
+node_modules/
+public/
+.deploy*/

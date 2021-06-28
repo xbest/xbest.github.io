@@ -1,20 +1,32 @@
 sudo: false
 language: node_js
 node_js:
-  - stable # use nodejs v10 LTS
-cache: npm
+  - stable
+cache:
+  npm: true
+  directories:
+    - node_modules
+
 branches:
   only:
-    - source # build master branch only
+    - source # build source branch only
+
+before_install:
+  - export TZ='Asia/Shanghai'
+  - git config --global user.name ${USER_NAME}
+  - git config --global user.email ${USER_EMAIL}
+  - npm install -g hexo-cli
+  - npm install
+  # 字数统计，时长统计需要工具
+  - npm install hexo-wordcount --save
+  # 中英文之间自动增加空格插件
+  - npm install hexo-pangu-spacing --save
+  - npm install hexo-deployer-git --save
+  - git config --global user.name ${USER_NAME}
+  - git config --global user.email ${USER_EMAIL}
 install:
   - npm install
 script:
-  - hexo generate # generate static files
-deploy:
-  provider: pages
-  skip-cleanup: true
-  github-token: $GH_TOKEN
-  keep-history: true
-  on:
-    branch: master
-  local-dir: public
+  - hexo clean
+  - hexo generate
+  - hexo deploy

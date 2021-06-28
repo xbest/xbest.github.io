@@ -29,4 +29,12 @@ install:
 script:
   - hexo clean
   - hexo generate
-  - hexo deploy
+deploy:
+  provider: pages
+  skip_cleanup: true
+  token: $GH_TOKEN
+  keep_history: true
+  on:
+    branch: source
+  local_dir: public
+  target_branch: master

@@ -104,3 +104,10 @@ symbols_count_time:
   time: true
   total_symbols: true
   total_time: true
+
+# Deployment
+## Docs: https://hexo.io/docs/one-command-deployment
+deploy:
+  type: git
+  repo: git@github.com:xbest/xbest.github.io.git
+  branch: master

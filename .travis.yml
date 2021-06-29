@@ -9,7 +9,7 @@ cache:
 
 branches:
   only:
-    - source # build source branch only
+    - blog # build source branch only
 
 before_install:
   - export TZ='Asia/Shanghai'
@@ -17,7 +17,7 @@ before_install:
   - git config --global user.email ${USER_EMAIL}
   - npm install -g hexo-cli
   - npm install
-  # 字数统计，时长统计需要工具
+  # 字数统计, 时长统计需要工具
   - npm install hexo-symbols-count-time --save
   # 中英文之间自动增加空格插件
   - npm install hexo-pangu-spacing --save
@@ -35,11 +35,9 @@ after_success:
   - git checkout master
   - cp -rf ../public/* ./
   # 必要配置文件
-  - cp -rf ../README.md ../.gitignore ./
-  # 更改 .gitignore 内容,与 source 分支的不一样,直接置空,目前没有需要过滤的
-  - echo "" > ./.gitignore
+  - cp -rf ../README.md ./
   - git add .
-  # 提交记录包含时间,跟上面更改时区配合
+  # 提交记录包含时间, 跟上面更改时区配合
   - git commit -m "Travis CI Auto Builder at `date +"%Y-%m-%d %H:%M"`"
   # 推送到主分支
   - git push --force --quiet "https://${GH_TOKEN}@${GH_URL}" master:master

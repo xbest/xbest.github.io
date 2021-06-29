@@ -45,7 +45,10 @@ jobs:
           git config --global user.email "imshhui@gmail.com"
           git config --global user.name "Bai Li"
           npm install hexo-cli -g
+          npm install hexo-symbols-count-time --save
+          npm install hexo-pangu-spacing --save
           npm install
+
       # Deploy hexo blog website.
       - name: Deploy
         run: |

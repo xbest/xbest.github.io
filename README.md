@@ -1,2 +1,2 @@
 # xbest.github.io
-[![Build Status](https://travis-ci.com/xbest/xbest.github.io.svg?branch=source)](https://travis-ci.com/xbest/xbest.github.io)
+[![Hexo Deploy](https://github.com/xbest/xbest.github.io/actions/workflows/hexo-deploy.yml/badge.svg?branch=blog)](https://github.com/xbest/xbest.github.io/actions/workflows/hexo-deploy.yml)

@@ -41,7 +41,7 @@ after_success:
   - cp -rf ../README.md ../.gitignore ./
   # 更改 .gitignore 内容,与 source 分支的不一样,直接置空,目前没有需要过滤的
   - echo "" > ./.gitignore
- - git add .
+  - git add .
   # 提交记录包含时间,跟上面更改时区配合
   - git commit -m "Travis CI Auto Builder at `date +"%Y-%m-%d %H:%M"`"
   # 推送到主分支

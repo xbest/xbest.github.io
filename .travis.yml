@@ -18,10 +18,9 @@ before_install:
   - npm install -g hexo-cli
   - npm install
   # 字数统计，时长统计需要工具
-  - npm install hexo-wordcount --save
+  - npm install hexo-symbols-count-time --save
   # 中英文之间自动增加空格插件
   - npm install hexo-pangu-spacing --save
-  - npm install hexo-deployer-git --save
   - git config --global user.name ${USER_NAME}
   - git config --global user.email ${USER_EMAIL}
 install:

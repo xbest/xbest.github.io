@@ -47,6 +47,7 @@ jobs:
           npm install hexo-cli -g
           npm install hexo-symbols-count-time --save
           npm install hexo-pangu-spacing --save
+          npm install hexo-deployer-git --save
           npm install
 
       # Deploy hexo blog website.

@@ -29,12 +29,18 @@ install:
 script:
   - hexo clean
   - hexo generate
-deploy:
-  provider: pages
-  skip_cleanup: true
-  token: $GH_TOKEN
-  keep_history: true
-  on:
-    branch: source
-  local_dir: public
-  target_branch: master
+after_success:
+  # 获取 master 分支内容
+  - git clone https://${GH_URL} .deploy_git
+  - cd .deploy_git
+  - git checkout master
+  - cp -rf ../public/* ./
+  # 必要配置文件
+  - cp -rf ../README.md ../.gitignore
+  # 更改 .gitignore 内容,与 source 分支的不一样,直接置空,目前没有需要过滤的
+  - echo "" > ./.gitignore
+  - git add .
+  # 提交记录包含时间,跟上面更改时区配合
+  - git commit -m "Travis CI Auto Builder at `date +"%Y-%m-%d %H:%M"`"
+  # 推送到主分支
+  - git push --force --quiet "https://${GH_TOKEN}@${GH_URL}" master:master

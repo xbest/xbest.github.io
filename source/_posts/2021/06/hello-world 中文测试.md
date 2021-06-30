@@ -21,6 +21,8 @@ More info1: [Writing](https://hexo.io/docs/writing.html)
 ``` bash
 $ hexo server
 ```
+test for google image
+![Google](https://raw.githubusercontent.com/xbest/image-hosting/main/img/202120210630192709.png)
 
 More info: [Server](https://hexo.io/docs/server.html)
 

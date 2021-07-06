@@ -34,8 +34,8 @@ jobs:
         with:
           node-version: '14'
 
-      - name: Install Highligh.js
-        run: npm install highligh.js --save
+      - name: Install Highlight.js
+        run: npm install highlight.js --save
 
       - name: Setup Hexo
         env:

@@ -35,7 +35,7 @@ jobs:
           node-version: '14'
 
       - name: Install Highlight.js
-        run: npm install highlight.js --save
+        run: npm install highlight.js --save -g
 
       - name: Setup Hexo
         env:

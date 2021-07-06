@@ -78,7 +78,7 @@ if (tryRelease(arg) && head node's signal bit is set) {
 AQS通过模板方法来实现由子类去控制锁的申请和释放。AQS提供了`tryAcquire`、`tryRelease`、`tryAcquireShared`和`tryReleaseShared`供子类去实现，即由子类决定如何获取和释放锁。`tryAcquireShared`和`tryReleaseShared`是共享锁的实现方法。
 
 ### acquire 方法
-``` java
+```
 public final void acquire(int arg) {
     if (!tryAcquire(arg) &&
         acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
@@ -90,7 +90,7 @@ public final void acquire(int arg) {
 3. 此处需要注意的是addWaiter方法仅仅是入队操作，acquireQueued才是让线程自旋去获取锁。
 
 ### addWaiter 方法
-``` java
+```
 private Node addWaiter(Node mode) {
     Node node = new Node(Thread.currentThread(), mode);
     // 尝试快速入队，如果失败则自旋入队（enq）
@@ -125,7 +125,7 @@ private Node enq(final Node node) {
 可以看到`addWaiter`中的尝试快速入队和`enq`中的自旋入队的区别在于，`enq`中做了`tail`是否为`null`的初始化，即判断队列是否为空。快速入队假设的情况就是大部分情况下，阻塞队列已经不为空了，所以可以省去这一部分的判断。
 
 ### acquireQueued 方法
-``` java
+```
 final boolean acquireQueued(final Node node, int arg) {
     boolean failed = true;
     try {
@@ -154,7 +154,7 @@ final boolean acquireQueued(final Node node, int arg) {
 此处的`cancelAcquire`方法，个人认为不会执行，因为调用`acquireQueued`的`acquire`是非中断的，而`acquireInterruptibly`中的`doAcquireInterruptibly`调用的`cancelAcquire`才会执行。
 
 ### shouldParkAfterFailedAcquire 方法
-``` java
+```
 private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
     int ws = pred.waitStatus;
     if (ws == Node.SIGNAL)
@@ -185,11 +185,11 @@ private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
 ```
 1. 如果`pred.waitStatus`已经是`Node.SIGNAL`了，那么直接`park`当前线程。
 2. 如果`pred.waitStatus > 0`，那么前驱节点已经被取消了，那么跳过所有被取消的前驱节点。
-* 这个地方有个疑问，就是`node.prev = pred = pred.prev`为什么没用CAS确保原子操作？个人理解，因为每个节点只会遍历前驱节点，而且只会跳过取消的前驱节点，当前驱节点不是取消状态时，则不会跳过，所以相当于多个线程在操作阻塞队列这个链表上不同区间段的某一段链表，各个线程并没有交叉操作，即不会产生资源竞争。 *
+   *这个地方有个疑问，就是`node.prev = pred = pred.prev`为什么没用CAS确保原子操作？个人理解，因为每个节点只会遍历前驱节点，而且只会跳过取消的前驱节点，当前驱节点不是取消状态时，则不会跳过，所以相当于多个线程在操作阻塞队列这个链表上不同区间段的某一段链表，各个线程并没有交叉操作，即不会产生资源竞争。*
 3. 如果都不是上述情况，那么更新前驱节点`status`为`Node.SIGNAL`，即表示后置节点需要唤醒。设置完成后，则再次进入自旋，当自旋再次进入此方法时，那么执行第一步中的判断，已经为`true`，则阻塞当前线程。
 
 ### cancelAcquire 方法
-``` java
+```
 private void cancelAcquire(Node node) {
     // Ignore if node doesn't exist
     if (node == null)

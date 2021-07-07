@@ -241,6 +241,8 @@ private void cancelAcquire(Node node) {
 ## 参考资料
 1. [The java.util.concurrent Synchronizer Framework](http://gee.cs.oswego.edu/dl/papers/aqs.pdf)
 2. AbstractQueuedSynchronizer 源代码(JDK 1.8)
+3. [On the Nature of Progress](http://www.cs.tau.ac.il/~shanir/progress.pdf)
+4. [Non-blocking algorithm](https://en.wikipedia.org/wiki/Non-blocking_algorithm)
 
 
 

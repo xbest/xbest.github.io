@@ -30,7 +30,7 @@ if (state may permit a blocked thread to acquire)
 - 维护等待锁的线程队列
 
 ### 锁的状态
-通过getState、setState和compareAndSetState来访问和更新锁的状态（state）。
+通过`getState`、`setState`和`compareAndSetState`来访问和更新锁的状态（state）。
 
 ### 线程的阻塞和唤醒
 通过`LockSupport.park`和`LockSupport.unpark`来阻塞线程和唤醒线程。
@@ -42,11 +42,11 @@ if (state may permit a blocked thread to acquire)
 AQS框架的核心就是维护一个FIFO的阻塞队列。因为此队列是先进先出（FIFO）的，那么也就意味着AQS框架也不支持基于优先级的同步了。
 AQS采用CLH队列作为阻塞队列的优势：
 - 入队（lock-freedom）和出队（obstruction-freedom）都很快。
-- 只需要比较head==tail，就能够快速检查是否有线程等待。
+- 只需要比较`head==tail`，就能够快速检查是否有线程等待。
 - release status是分散的，避免了内存竞争。
 AQS队列在CLH队列的基础上做了一些改进：
 - AQS队列的节点需要显示的去唤醒他的successor，所以Node节点包含next，指向下一个节点，但是不保证原子性（因为没有合适的技术来确保双链表的更新能够达到lock-freedom并发级别）。
-- Node节点中的status是用来控制阻塞（blocking），而不是自旋（spinning）的。AQS中的Node.status不通过判断release状态来决定是否获取锁，而是通过tryAcquire来决定是否要出队，而且只有Node.pred==head，才有资格去调用tryAcquire，避免了竞争。
+- Node节点中的status是用来控制阻塞（blocking），而不是自旋（spinning）的。AQS中的`Node.status`不通过判断release状态来决定是否获取锁，而是通过`tryAcquire`来决定是否要出队，而且只有`Node.pred==head`，才有资格去调用`tryAcquire`，避免了竞争。
 - 与其他语言比较，AQS的队列不用操心内存释放问题。
 
 ## AQS 实现
@@ -85,9 +85,9 @@ public final void acquire(int arg) {
         selfInterrupt();
 }
 ```
-1. 调用tryAcquire方法，如果成功，那么获取锁。
-2. 如果不成功，则将此线程入队（addWaiter），并且尝试自旋获取锁（acquireQueued）。
-3. 此处需要注意的是addWaiter方法仅仅是入队操作，acquireQueued才是让线程自旋去获取锁。
+1. 调用`tryAcquire`方法，如果成功，那么获取锁。
+2. 如果不成功，则将此线程入队`addWaiter`，并且尝试自旋获取锁`acquireQueued`。
+3. 此处需要注意的是`addWaiter`方法仅仅是入队操作，`acquireQueued`才是让线程自旋去获取锁。
 
 ### addWaiter 方法
 ```

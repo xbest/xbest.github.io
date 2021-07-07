@@ -4,12 +4,15 @@ date: 2021/07/05
 categories: 源码浅析
 urlName: AbstractQueuedSynchronizer
 ---
-本学习笔记主要参考Doug Lea论文及源代码编写而成。主要分为AQS的设计和实现、AQS源码解读。AQS的设计和实现中阐述了要解决的三个核心问题：锁的状态、线程的阻塞和唤醒、阻塞队列。AQS源码解读主要涉及`acquire`、`addWaiter`、`acquireQueued`、`shouldParkAfterFailedAcquire`、`cancelAcquire方法`，文中提出了目前仍然存在的疑问和困惑。
+本学习笔记主要参考Doug Lea论文及源代码编写而成。主要分为AQS的设计和实现、AQS源码解读。
+AQS的设计和实现中阐述了要解决的三个核心问题：锁的状态、线程的阻塞和唤醒、阻塞队列。
+AQS源码解读主要涉及`acquire`、`addWaiter`、`acquireQueued`、`shouldParkAfterFailedAcquire`、`cancelAcquire`方法，文中提出了目前仍然存在的疑问和困惑。
 
 ## AQS设计
 要设计一个锁，必须解决两个问题：
 1. 如何申请锁？
 2. 如何释放锁？
+
 这里引用Doug Lea论文中的伪代码来说明上述两个问题。
 ```
 while (synchronization state does not allow acquire) {
@@ -24,8 +27,9 @@ if (state may permit a blocked thread to acquire)
     unblock one or more queued threads;
 ```
 当前线程释放锁时，首先更新锁的状态；如果允许阻塞线程去获取锁的状态，那么唤醒已经入队的阻塞的一个或者多个线程。
+
 为了能够支持上述伪代码中的申请锁和释放锁，那么需要以下几件事情：
-- 原子的维护锁的状态（synchronization state）
+- 原子维护锁的状态（synchronization state）
 - 阻塞和唤醒线程机制
 - 维护等待锁的线程队列
 
@@ -41,17 +45,18 @@ if (state may permit a blocked thread to acquire)
 ### 阻塞队列
 AQS框架的核心就是维护一个FIFO的阻塞队列。因为此队列是先进先出（FIFO）的，那么也就意味着AQS框架也不支持基于优先级的同步了。
 AQS采用CLH队列作为阻塞队列的优势：
-- 入队（lock-freedom）和出队（obstruction-freedom）都很快。
+- 入队（[Lock-freedom](https://en.wikipedia.org/wiki/Non-blocking_algorithm#Lock-freedom)）和出队（[Obstruction-freedom](https://en.wikipedia.org/wiki/Non-blocking_algorithm#Obstruction-freedom)）都很快。
 - 只需要比较`head==tail`，就能够快速检查是否有线程等待。
 - release status是分散的，避免了内存竞争。
+
 AQS队列在CLH队列的基础上做了一些改进：
-- AQS队列的节点需要显示的去唤醒他的successor，所以Node节点包含next，指向下一个节点，但是不保证原子性（因为没有合适的技术来确保双链表的更新能够达到lock-freedom并发级别）。
-- Node节点中的status是用来控制阻塞（blocking），而不是自旋（spinning）的。AQS中的`Node.status`不通过判断release状态来决定是否获取锁，而是通过`tryAcquire`来决定是否要出队，而且只有`Node.pred==head`，才有资格去调用`tryAcquire`，避免了竞争。
+- AQS队列的节点需要显示的去唤醒他的successor，所以Node节点包含next，指向下一个节点，但是不保证原子性（因为没有合适的技术来确保双链表的更新能够达到Lock-freedom并发级别）。
+- Node节点中的`status`是用来控制阻塞（blocking），而不是自旋（spinning）的。AQS中的`Node.status`不通过判断release状态来决定是否获取锁，而是通过`tryAcquire`来决定是否要出队，而且只有`Node.pred==head`，才有资格去调用`tryAcquire`，避免了竞争。
 - 与其他语言比较，AQS的队列不用操心内存释放问题。
 
 ## AQS 实现
 AQS伪代码的实现版本（此版本的伪代码不支持超时和中断）
-申请锁：
+**申请锁：**
 ```
 if (!tryAcquire(arg)) {
     node = create and enqueue new node;
@@ -66,7 +71,7 @@ if (!tryAcquire(arg)) {
     head = node;
 }
 ```
-释放锁：
+**释放锁：**
 ```
 if (tryRelease(arg) && head node's signal bit is set) { 
     compareAndSet head's signal bit to false;

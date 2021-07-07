@@ -4,7 +4,7 @@ date: 2021/07/05
 categories: 源码浅析
 urlName: AbstractQueuedSynchronizer
 ---
-本学习笔记主要参考Doug Lea论文及源代码编写而成。主要分为AQS的设计和实现、AQS源码解读。
+本学习笔记主要参考Doug Lea论文及源代码编写而成，主要分为AQS的设计和实现、AQS源码解读。
 AQS的设计和实现中阐述了要解决的三个核心问题：锁的状态、线程的阻塞和唤醒、阻塞队列。
 AQS源码解读主要涉及`acquire`、`addWaiter`、`acquireQueued`、`shouldParkAfterFailedAcquire`、`cancelAcquire`方法，文中提出了目前仍然存在的疑问和困惑。
 
@@ -44,18 +44,20 @@ if (state may permit a blocked thread to acquire)
 
 ### 阻塞队列
 AQS框架的核心就是维护一个FIFO的阻塞队列。因为此队列是先进先出（FIFO）的，那么也就意味着AQS框架也不支持基于优先级的同步了。
+
 AQS采用CLH队列作为阻塞队列的优势：
 - 入队（[Lock-freedom](https://en.wikipedia.org/wiki/Non-blocking_algorithm#Lock-freedom)）和出队（[Obstruction-freedom](https://en.wikipedia.org/wiki/Non-blocking_algorithm#Obstruction-freedom)）都很快。
 - 只需要比较`head==tail`，就能够快速检查是否有线程等待。
 - release status是分散的，避免了内存竞争。
 
 AQS队列在CLH队列的基础上做了一些改进：
-- AQS队列的节点需要显示的去唤醒他的successor，所以Node节点包含next，指向下一个节点，但是不保证原子性（因为没有合适的技术来确保双链表的更新能够达到Lock-freedom并发级别）。
+- AQS队列的节点需要显示的去唤醒他的successor，所以Node节点包含next，指向下一个节点，但是不保证原子性（因为没有合适的技术来确保双向链表的更新能够达到Lock-freedom并发级别）。
 - Node节点中的`status`是用来控制阻塞（blocking），而不是自旋（spinning）的。AQS中的`Node.status`不通过判断release状态来决定是否获取锁，而是通过`tryAcquire`来决定是否要出队，而且只有`Node.pred==head`，才有资格去调用`tryAcquire`，避免了竞争。
 - 与其他语言比较，AQS的队列不用操心内存释放问题。
 
 ## AQS 实现
 AQS伪代码的实现版本（此版本的伪代码不支持超时和中断）
+
 **申请锁：**
 ```
 if (!tryAcquire(arg)) {
@@ -71,6 +73,7 @@ if (!tryAcquire(arg)) {
     head = node;
 }
 ```
+
 **释放锁：**
 ```
 if (tryRelease(arg) && head node's signal bit is set) { 
@@ -137,8 +140,7 @@ final boolean acquireQueued(final Node node, int arg) {
         boolean interrupted = false;
         for (;;) {
             final Node p = node.predecessor();
-            // 前面提到了只有node的前驱节点是head节点时，
-            // node才有资格调用tryAcquire
+            // 前面提到了只有node的前驱节点是head节点时，node才有资格调用tryAcquire
             if (p == head && tryAcquire(arg)) {
                 setHead(node);
                 p.next = null; // help GC
@@ -227,7 +229,7 @@ private void cancelAcquire(Node node) {
             pred.thread != null) {
             Node next = node.next;
             if (next != null && next.waitStatus <= 0)
-            // 注意此处为何又对next指针做CAS？
+                // 注意此处为何又对next指针做CAS？
                 compareAndSetNext(pred, predNext, next);
         } else {
             unparkSuccessor(node);

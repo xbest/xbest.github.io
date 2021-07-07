@@ -56,9 +56,9 @@ AQS队列在CLH队列的基础上做了一些改进：
 - 与其他语言比较，AQS的队列不用操心内存释放问题。
 
 ## AQS 实现
-AQS伪代码的实现版本（此版本的伪代码不支持超时和中断）  
+AQS伪代码的实现版本（此版本的伪代码不支持超时和中断）
 
-** 申请锁： ** 
+**申请锁** 
 ```
 if (!tryAcquire(arg)) {
     node = create and enqueue new node;
@@ -74,7 +74,7 @@ if (!tryAcquire(arg)) {
 }
 ```  
 
-** 释放锁： ** 
+**释放锁** 
 ```
 if (tryRelease(arg) && head node's signal bit is set) { 
     compareAndSet head's signal bit to false;

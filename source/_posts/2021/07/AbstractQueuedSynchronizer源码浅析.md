@@ -72,7 +72,7 @@ if (!tryAcquire(arg)) {
     }
     head = node;
 }
-```  
+```
 
 **释放锁** 
 ```

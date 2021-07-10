@@ -1,7 +1,7 @@
 ---
 title: AbstractQueuedSynchronizer 源码浅析
 date: 2021/07/05
-categories: 源码浅析
+categories: [Java,源码浅析]
 urlName: AbstractQueuedSynchronizer
 ---
 本学习笔记主要参考Doug Lea论文及源代码编写而成，主要分为AQS的设计和实现、AQS源码解读。

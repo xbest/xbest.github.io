@@ -8,6 +8,8 @@ urlName: AbstractQueuedSynchronizer
 AQS的设计和实现中阐述了要解决的三个核心问题：锁的状态、线程的阻塞和唤醒、阻塞队列。
 AQS源码解读主要涉及`acquire`、`addWaiter`、`acquireQueued`、`shouldParkAfterFailedAcquire`、`cancelAcquire`方法，文中提出了目前仍然存在的疑问和困惑。
 
+<!-- more -->
+
 ## AQS设计
 要设计一个锁，必须解决两个问题：
 1. 如何申请锁？

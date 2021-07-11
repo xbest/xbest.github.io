@@ -41,6 +41,7 @@ urlName: ThreadLocal
 ![ThreadLocal源码图](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711142456.png)
 如上图所示，`ThreadLocal`中并没有存储变量的字段，那么调用`ThreadLocal.set`方法，将变量存储到哪里了呢？
 ```java
+public class ThreadLocal<T> {
     public void set(T value) {
         Thread t = Thread.currentThread();
         ThreadLocalMap map = getMap(t);
@@ -49,19 +50,24 @@ urlName: ThreadLocal
         else
             createMap(t, value);
     }
+}
 ```
 通过`set`方法源代码可以看到，真正存储变量数据信息的`ThreadLocalMap`不在`ThreadLocal`中，而是根据`Thread.currentThread()`查询或者创建的。
 那么`getMap`和`createMap`是怎么实现的呢？我们继续跟踪查看这两方法的实现。
 ```java
+public class ThreadLocal<T> {
     ThreadLocalMap getMap(Thread t) {
         return t.threadLocals;
     }
+}
 ```
 `getMap`的方法简单到不能再简单了，就是直接返回了`Thread.currentThread().threadLocals`，非常清晰地能够看出真正存储变量数据的地方是当前线程的字段。
 ```java
+public class ThreadLocal<T> {
     void createMap(Thread t, T firstValue) {
         t.threadLocals = new ThreadLocalMap(this, firstValue);
     }
+}
 ```
 `createMap`的方法也是简单到了极致，直接就是给当前线程的`threadLocals`字段赋值一个新创建的`ThreadLocalMap`对象的实例。
 通过`set`和`get`两个关键方法的源代码可以基本上看出`ThreadLocal`的实现了，也真正明白了的意思了。
@@ -76,7 +82,31 @@ urlName: ThreadLocal
 内存泄漏就是heap中的对象已经没有其它地方在使用了，但是GC却不能回收这块内存，总结就是以下两点：
 - 线程或者进程中没有地方**真正**在使用该对象
 - GC不能回收该对象
-结合上述两点内存泄漏的特征，我们针对`ThreadLocal`进行分析以下是否存在内存泄漏。
+结合上述两点内存泄漏的特征，我们针对`ThreadLocal`进行分析以下是否存在内存泄漏。我们先看一下`ThreadLocal`的典型应用  
+```java
+   public class UserContext {
+       // Thread local variable containing user
+       private static final ThreadLocal<User> userThreadLocal = new ThreadLocal<User>();
   
+       // Returns the current user
+       public static User get() {
+           return userThreadLocal.get();
+       }
+       
+       public static void set(User user) {
+           userThreadLocal.set(user);
+       }
+   }
+```
+假设我们有一个线程池，线程池里的线程每次都会处理`User`相关数据，假设我们从线程池中取出线程A，在线程A的第一个方法入口时调用`UserContext.set`方法，保存`User`信息，
+然后在线程A中调用`UserContext.get`方法去获取`User`信息，在线程A退出时，即不需要当前`User`信息了，此时满足了内存泄漏的第一个条件即这个`User`不再被使用。
+但是从`userThreadLocal`的角度来看，其实下次还是会被别的线程（例如线程B）使用的，即使来的新请求又被线程A所处理，那么这次线程A存储的`User`也不是上次的`User`了。
+在代码中可以看到`ThreadLocal`是`private static`的，也就是`Class Variables`，只有当类卸载的时候才会被回收，所以GC不会回收`userThreadLocal`，
+同时由于线程A在线程池中所以线程A也不会被释放，那么线程A所持有的`threadLocals`也不会被回收，那么`threadLocals`中所存储的`User`对象当然也就不会被GC回收，
+满足了内存泄漏的第二个条件，从这个角度来看的话，确实存在内存泄漏。
+但是内存泄漏的第一个条件改为**线程或者内存中不能通过引用访问到该对象**，那么此时就不满足内存泄漏了，因为即使线程A返回到线程池后，下次再进来的话还是能访问到该`User`对象的，
+如果该`User`对象没有被覆盖的话。
+
+
  
 

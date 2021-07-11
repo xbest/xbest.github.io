@@ -75,14 +75,15 @@ public class ThreadLocal<T> {
 
 ## ThreadLocal到底存不存在内存泄漏
 ### 什么是内存泄漏（memory leak）
-> A Memory Leak is a situation when there are objects present in the heap that are no longer used,
-> but the garbage collector is unable to remove them from memory and, thus they are unnecessarily maintained.
+> A Memory Leak is a situation when there are objects present in the heap that are no longer used, but the garbage collector is unable to remove them from memory and, thus they are unnecessarily maintained.
 
 ![memory leak](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711161412.webp)
 内存泄漏就是heap中的对象已经没有其它地方在使用了，但是GC却不能回收这块内存，总结就是以下两点：
 - 线程或者进程中没有地方**真正**在使用该对象
 - GC不能回收该对象
-结合上述两点内存泄漏的特征，我们针对`ThreadLocal`进行分析以下是否存在内存泄漏。我们先看一下`ThreadLocal`的典型应用  
+
+### ThreadLocal内存泄漏分析
+结合内存泄漏的两个特征，我们针对`ThreadLocal`进行分析以下是否存在内存泄漏。我们先看一下`ThreadLocal`的典型应用  
 ```java
    public class UserContext {
        // Thread local variable containing user
@@ -107,6 +108,7 @@ public class ThreadLocal<T> {
 但是内存泄漏的第一个条件改为**线程或者内存中不能通过引用访问到该对象**，那么此时就不满足内存泄漏了，因为即使线程A返回到线程池后，下次再进来的话还是能访问到该`User`对象的，
 如果该`User`对象没有被覆盖的话。
 
-
+## ThreadLocal在开源代码中的应用示例
+## ThreadLocal的适用场景
  
 

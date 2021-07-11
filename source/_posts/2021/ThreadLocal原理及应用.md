@@ -19,13 +19,13 @@ urlName: ThreadLocal
 要研究`ThreadLocal`，我们先要弄明白`ThreadLocal`是什么？先来看一下源代码中官方给出的描述：
 > This class provides thread-local variables.
 > These variables differ from their normal counterparts in that each thread that accesses one (via its get or set method) has its own,
-> independently initialized copy of the variable.
+> independently initialized copy of the variable.  
 > ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread (e.g., a user ID or Transaction ID).
 > Each thread holds an implicit reference to its copy of a thread-local variable as long as the thread is alive and the ThreadLocal instance is accessible;
 > after a thread goes away, all of its copies of thread-local instances are subject to garbage collection (unless other references to these copies exist).
 
 官方给出的定义是ThreadLocal提供了**线程本地的变量**。它与普通的变量的区别在于，每个使用该变量的线程都会初始化一份**完全独立的实例副本**。
-建议`ThreadLocal`定义为`private static field`。
+建议`ThreadLocal`定义为`private static field`。  
 [Java中总共定义了以下四种变量](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/variables.html)：
 - Instance Variables(Non-Static Fields)
 - Class Variables(Static Fields)
@@ -39,15 +39,13 @@ urlName: ThreadLocal
 ### ThreadLocal设计
 ![ThreadLocal原理图](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711155545.jpg)
 如上图所示，`ThreadLocal`变量其实仅仅是作为`ThreadLocalMap`中的key来存储数据的，即`Thread`中的`ThreadLocalMap`类型的`threadLocals`字段才是真正存储数据的地方。  
-> 为什么不设计成`ThreadLocal`类中有个`Map`，将线程Id作为key，`ThreadLocalMap`实例作为value呢？
-  
+***为什么不设计成`ThreadLocal`类中有个`Map`，将线程Id作为key，`ThreadLocalMap`实例作为value呢？***
 现在的设计思路大概有以下几个好处：
 - `Map`中`Entry`的数量减少了，疑问中的设计`Entry`中的数量是线程的数量，而JDK中的设计`Entry`的数量是`ThreadLocal`实例的数量
 - 将`ThreadLocalMap`放到线程中，可以随着线程的销毁而销毁，减少内存使用量
 - 每个线程在访问变量时，都是访问的本地副本，相对于`ThreadLocal`类中的`Map`设计，性能有很大提高，需要考虑多线程并发的问题
   
-> 为什么要用`ThreadLocalMap`来存储变量，`ThreadLocal.set()`方法也没有任何`key/value`参数？
-  
+***为什么要用`ThreadLocalMap`来存储变量，`ThreadLocal.set()`方法也没有任何`key/value`参数？***  
 这是我一开始阅读源代码时的一个疑问，后来发现`ThreadLocal.set()`是没有任何参数，但是一个线程可能存储多个`ThreadLocal`实例对象关联的值。
   
 ### ThreadLocal实现
@@ -105,7 +103,7 @@ static class ThreadLocalMap {
 没有`next`指针，所以没有采用[链地址法](https://en.wikipedia.org/wiki/Hash_table#Separate_chaining)去解决
 [哈希冲突](https://en.wikipedia.org/wiki/Hash_table#Collision_resolution)，
 而是采用了[开放地址法](https://en.wikipedia.org/wiki/Hash_table#Open_addressing)（线性探测法、二次探测法、伪随机探测法）来解决哈希冲突，
-`ThreadLocal`采用的是线性探测再散列。除此之外还有[再哈希法](https://en.wikipedia.org/wiki/Hash_table#2-choice_hashing)  
+`ThreadLocal`采用的是线性探测再散列，除此之外还有[再哈希法](https://en.wikipedia.org/wiki/Hash_table#2-choice_hashing)。  
   
 ```java
 static class ThreadLocalMap {
@@ -143,13 +141,17 @@ static class ThreadLocalMap {
     }
 }
 ```
+`ThreadLocalMap`存储元素的过程如下：  
 1. 斐波那契散列计算数组下标
 2. `for`循环判断元素是否存在，当前下标不存在元素时，直接设置数组`tab[i] = new Entry(key, value)`
 3. 当前下标存在元素时，判断key值是否相等，如果相等，那么直接更新当前元素
-4. 当前下标存在元素，且key值不相等，那么探测式清理元素`replaceStaleEntry`
-  
-> 探测式清理`replaceStaleEntry`：从当前`key`为`null`的元素开始，向后不断清理，直到再次遇到`key`为`null`的元素为止  
-> 启发式清理`cleanSomeSlots`：试探性的扫描数组，寻找过期元素，执行对数扫描次数，但是会导致插入操作花费O(n)时间  
+4. 当前下标存在元素，且key值不相等，那么探测式清理元素`replaceStaleEntry`  
+
+### ThreadLocal的清除算法  
+**探测式清理`replaceStaleEntry`：**  
+从当前`key`为`null`的元素开始，向后不断清理，直到再次遇到`key`为`null`的元素为止  
+**启发式清理`cleanSomeSlots`：**  
+试探性的扫描数组，寻找过期元素，执行对数扫描次数，但是会导致插入操作花费O(n)时间    
 > Heuristically scan some cells looking for stale entries. This is invoked when either a new element is added,
 > or another stale one has been expunged. It performs a logarithmic number of scans, as a balance between no scanning (fast but retains garbage) 
 > and a number of scans proportional to number of elements, that would find all garbage but would cause some insertions to take O(n) time.
@@ -183,13 +185,13 @@ static class ThreadLocalMap {
 ```
 假设我们有一个线程池，线程池里的线程每次都会处理`User`相关数据，假设我们从线程池中取出线程A，在线程A的第一个方法入口时调用`UserContext.set`方法，保存`User`信息，
 然后在线程A中调用`UserContext.get`方法去获取`User`信息，在线程A退出时，即不需要当前`User`信息了，此时满足了内存泄漏的第一个条件即这个`User`不再被使用。
-但是从`userThreadLocal`的角度来看，其实下次还是会被别的线程（例如线程B）使用的，即使来的新请求又被线程A所处理，那么这次线程A存储的`User`也不是上次的`User`了。
+但是从`userThreadLocal`的角度来看，其实下次还是会被别的线程（例如线程B）使用的，即使来的新请求又被线程A所处理，那么这次线程A存储的`User`也不是上次的`User`了。  
 在代码中可以看到`ThreadLocal`是`private static`的，也就是`Class Variables`，只有当类卸载的时候才会被回收，所以GC不会回收`userThreadLocal`，
 同时由于线程A在线程池中所以线程A也不会被释放，那么线程A所持有的`threadLocals`也不会被回收，那么`threadLocals`中所存储的`User`对象当然也就不会被GC回收，
-满足了内存泄漏的第二个条件，从这个角度来看的话，确实存在内存泄漏。但是内存泄漏的第一个条件改为**线程或者内存中不能通过引用访问到该对象**，那么此时就不满足内存泄漏了，
+满足了内存泄漏的第二个条件，从这个角度来看的话，确实存在内存泄漏。  
+但是内存泄漏的第一个条件改为**线程或者内存中不能通过引用访问到该对象**，那么此时就不满足内存泄漏了，
 因为即使线程A返回到线程池后，下次再进来的话还是能访问到该`User`对象的，如果该`User`对象没有被覆盖的话。
 
-## ThreadLocal的清除算法
 ## ThreadLocal在开源代码中的应用示例
 ```java
 public abstract class TransactionSynchronizationManager {

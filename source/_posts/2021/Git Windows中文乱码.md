@@ -4,7 +4,7 @@ date: 2021/07/12
 categories:
 - [Git]
 - [常用工具]
-  urlName: Git-Windows-ZH-CN-Messy-Code
+urlName: Git-Windows-ZH-CN-Messy-Code
 ---
 
 ```shell

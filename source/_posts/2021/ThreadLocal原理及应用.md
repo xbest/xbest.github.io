@@ -7,14 +7,14 @@ categories:
 urlName: ThreadLocal
 ---
 本文主要从`ThreadLocal`的源代码出发，分析了以下几个问题：
-- `ThreadLocal`的原理及实现
+- `ThreadLocal`的定义、原理及实现
 - `ThreadLocal`到底存不存在内存泄漏
 - `ThreadLocal`在开源代码中的应用示例
 - `ThreadLocal`的适用场景
 
 <!-- more -->
 
-## ThreadLocal原理及实现
+## ThreadLocal定义、原理及实现
 ### ThreadLocal定义
 要研究`ThreadLocal`，我们先要弄明白`ThreadLocal`是什么？先来看一下源代码中官方给出的描述：
 > This class provides thread-local variables. 
@@ -30,13 +30,15 @@ urlName: ThreadLocal
 - Class Variables(Static Fields)
 - Local Variables
 - Parameters
-那么什么是`thread-local variables`呢？从字面意思来看就是`Local Variables`，就是本地变量或者局部变量，但是本地变量的作用域是方法内部，
-也就是`method-local variables`，所以从这个角度来分析就是作用域不同，`thread-local variables`的作用域就是thread内部，也就是不局限于方法内部，
-所以`ThreadLocal`的作用域就是整个thread内。
   
+那么什么是`thread-local variables`呢？从字面意思来看就是`Local Variables`，就是本地变量或者局部变量，但是本地变量的作用域是方法内部，也就是`method-local variables`，所以从这个角度来分析就是作用域不同，`thread-local variables`的作用域就是thread内部，也就是不局限于方法内部，所以`ThreadLocal`的作用域就是整个thread内。
+  
+### ThreadLocal原理
+![ThreadLocal原理图](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711155545.jpg)
+如上图所示，`ThreadLocal`变量其实仅仅是作为`ThreadLocalMap`中的key来存储数据的，即`Thread`中的`ThreadLocalMap`类型的`threadLocals`字段才是真正存储数据的地方。
 ### ThreadLocal实现
 首先看一下`ThreadLocal`的源代码，主要方法为`set`及`get`方法。
-![ThreadLocal](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711142456.png)
+![ThreadLocal源码图](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711142456.png)
 如上图所示，`ThreadLocal`中并没有存储变量的字段，那么调用`ThreadLocal.set`方法，将变量存储到哪里了呢？
 ```java
     public void set(T value) {
@@ -62,7 +64,19 @@ urlName: ThreadLocal
     }
 ```
 `createMap`的方法也是简单到了极致，直接就是给当前线程的`threadLocals`字段赋值一个新创建的`ThreadLocalMap`对象的实例。
-通过`set`和`get`两个关键方法的源代码可以基本上看出`ThreadLocal`的实现了，也真正明白了
+通过`set`和`get`两个关键方法的源代码可以基本上看出`ThreadLocal`的实现了，也真正明白了的意思了。
 > 每个使用`ThreadLocal`的线程都独立初始化了一份实例的副本
 
-的意思了。
+## ThreadLocal到底存不存在内存泄漏
+### 什么是内存泄漏（memory leak）
+> A Memory Leak is a situation when there are objects present in the heap that are no longer used,
+> but the garbage collector is unable to remove them from memory and, thus they are unnecessarily maintained.
+
+![memory leak](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711161412.webp)
+内存泄漏就是heap中的对象已经没有其它地方在使用了，但是GC却不能回收这块内存，总结就是以下两点：
+- 线程或者进程中没有地方**真正**在使用该对象
+- GC不能回收该对象
+结合上述两点内存泄漏的特征，我们针对`ThreadLocal`进行分析以下是否存在内存泄漏。
+  
+ 
+

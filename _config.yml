@@ -134,3 +134,14 @@ neat_js:
     - '**/*.min.js'
     - '**/jquery.fancybox.pack.js'
     - '**/index.js'
+
+marked:
+  gfm: true
+  pedantic: false
+  sanitize: false
+  tables: true
+  breaks: false
+  smartLists: true
+  smartypants: true
+  modifyAnchors: ''
+  autolink: true

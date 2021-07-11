@@ -87,6 +87,7 @@ public class ThreadLocal<T> {
 通过`set`和`get`两个关键方法的源代码可以基本上看出`ThreadLocal`的实现了，也真正明白了的意思了。
 > 每个使用`ThreadLocal`的线程都独立初始化了一份实例的副本
   
+### ThreadLocalMap源码
 ```java
 static class ThreadLocalMap {
     static class Entry extends WeakReference<ThreadLocal<?>> {
@@ -105,7 +106,54 @@ static class ThreadLocalMap {
 [哈希冲突](https://en.wikipedia.org/wiki/Hash_table#Collision_resolution)，
 而是采用了[开放地址法](https://en.wikipedia.org/wiki/Hash_table#Open_addressing)（线性探测法、二次探测法、伪随机探测法）来解决哈希冲突，
 `ThreadLocal`采用的是线性探测再散列。除此之外还有[再哈希法](https://en.wikipedia.org/wiki/Hash_table#2-choice_hashing)  
+  
+```java
+static class ThreadLocalMap {
+    private void set(ThreadLocal<?> key, Object value) {
 
+        // We don't use a fast path as with get() because it is at
+        // least as common to use set() to create new entries as
+        // it is to replace existing ones, in which case, a fast
+        // path would fail more often than not.
+
+        Entry[] tab = table;
+        int len = tab.length;
+        int i = key.threadLocalHashCode & (len - 1);
+
+        for (Entry e = tab[i];
+             e != null;
+             e = tab[i = nextIndex(i, len)]) {
+            ThreadLocal<?> k = e.get();
+
+            if (k == key) {
+                e.value = value;
+                return;
+            }
+
+            if (k == null) {
+                replaceStaleEntry(key, value, i);
+                return;
+            }
+        }
+
+        tab[i] = new Entry(key, value);
+        int sz = ++size;
+        if (!cleanSomeSlots(i, sz) && sz >= threshold)
+            rehash();
+    }
+}
+```
+1. 斐波那契散列计算数组下标
+2. `for`循环判断元素是否存在，当前下标不存在元素时，直接设置数组`tab[i] = new Entry(key, value)`
+3. 当前下标存在元素时，判断key值是否相等，如果相等，那么直接更新当前元素
+4. 当前下标存在元素，且key值不相等，那么探测式清理元素`replaceStaleEntry`
+  
+> 探测式清理`replaceStaleEntry`：从当前`key`为`null`的元素开始，向后不断清理，直到再次遇到`key`为`null`的元素为止  
+> 启发式清理`cleanSomeSlots`：试探性的扫描数组，寻找过期元素，执行对数扫描次数，但是会导致插入操作花费O(n)时间  
+> Heuristically scan some cells looking for stale entries. This is invoked when either a new element is added,
+> or another stale one has been expunged. It performs a logarithmic number of scans, as a balance between no scanning (fast but retains garbage) 
+> and a number of scans proportional to number of elements, that would find all garbage but would cause some insertions to take O(n) time.
+  
 ## ThreadLocal到底存不存在内存泄漏
 ### 什么是内存泄漏（memory leak）
 > A Memory Leak is a situation when there are objects present in the heap that are no longer used, 
@@ -170,9 +218,13 @@ Spring Transaction应用代码示例
 ## ThreadLocal的适用场景
 - 用户全局Token/Session
 - `SimpleDateFormat`线程安全问题
-- MDC、TraceId
+- MDC、TraceId  
+
 ## 总结
 - `ThreadLocal`不能解决多线程共享变量的问题，也不能当作锁来使用，但是可以通过隔离来解决线程安全的问题
-- 
+- `ThreadLocal`采用斐波那契散数列计算散列，黄金分割点2^32*0.6180339887计算得出`HASH_INCREMENT = 0x61c88647`
+- `ThreadLocal`采用探测式清理和启发式清理过期元素
+- `ThreadLocal`中的`key`为弱引用，当key已经没有强引用时，可能会发生内存泄漏，要显示的调用`remove`
+- `ThreadLocal`采用开放地址法解决哈希冲突
  
 

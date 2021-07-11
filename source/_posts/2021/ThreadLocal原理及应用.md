@@ -39,7 +39,7 @@ urlName: ThreadLocal
 ### ThreadLocal设计
 ![ThreadLocal原理图](https://raw.githubusercontent.com/xbest/image-hosting/main/img/20210711155545.jpg)
 如上图所示，`ThreadLocal`变量其实仅仅是作为`ThreadLocalMap`中的key来存储数据的，即`Thread`中的`ThreadLocalMap`类型的`threadLocals`字段才是真正存储数据的地方。  
-***为什么不设计成`ThreadLocal`类中有个`Map`，将线程Id作为key，`ThreadLocalMap`实例作为value呢？***
+***为什么不设计成`ThreadLocal`类中有个`Map`，将线程Id作为key，`ThreadLocalMap`实例作为value呢？***  
 现在的设计思路大概有以下几个好处：
 - `Map`中`Entry`的数量减少了，疑问中的设计`Entry`中的数量是线程的数量，而JDK中的设计`Entry`的数量是`ThreadLocal`实例的数量
 - 将`ThreadLocalMap`放到线程中，可以随着线程的销毁而销毁，减少内存使用量
